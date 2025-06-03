@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Notas Gemini</title>
+    
+    <!-- CSS Modular -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    
+    <!-- Scripts externos -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/lib/marked.umd.min.js"></script>
+</head>
+<body>
+    <div class="container" x-data="notesApp()" x-init="init()">
+        <!-- Header principal -->
+        <header class="app-header">
+            <h1 class="app-title">Gestor de Notas Gemini</h1>
+            <div class="stats-bar" id="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total:</span>
+                    <span class="stat-value" x-text="stats.total"></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Copiadas:</span>
+                    <span class="stat-value" x-text="stats.copied"></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Procesadas:</span>
+                    <span class="stat-value" x-text="stats.completed"></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Modificadas:</span>
+                    <span class="stat-value" x-text="stats.modified"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sistema de notificaciones -->
+        <div class="notification" 
+            :class="notification.type === 'error' ? 'notification--error' : 'notification--success'"
+            x-show="notification.show" 
+            x-text="notification.message"
+            x-transition:enter="notification-enter"
+            x-transition:leave="notification-leave">
+        </div>
+        
+        <!-- Indicador de carga -->
+        <div class="loader-overlay" x-show="loading">
+            <div class="loader">
+                <div class="loader__spinner"></div>
+                <p class="loader__text">Procesando...</p>
+            </div>
+        </div>
+        
+        <!-- Sistema de pestañas -->
+        <nav class="tabs">
+            <button class="tab-button" 
+                    :class="{ 'tab-button--active': activeTab === 'copy' }"
+                    @click="activeTab = 'copy'">
+                <span class="tab-button__icon">📋</span>
+                <span class="tab-button__text">Notas para Copiar</span>
+                <span class="tab-badge" x-show="Object.keys(notesToProcess).length > 0" x-text="Object.keys(notesToProcess).length"></span>
+            </button>
+            <button class="tab-button" 
+                    :class="{ 'tab-button--active': activeTab === 'paste' }"
+                    @click="activeTab = 'paste'">
+                <span class="tab-button__icon">⚡</span>
+                <span class="tab-button__text">Procesar Respuestas</span>
+                <span class="tab-badge" x-show="Object.keys(copiedNotes).length > 0" x-text="Object.keys(copiedNotes).length"></span>
+            </button>
+            <button class="tab-button" 
+                :class="{ 'tab-button--active': activeTab === 'processed' }"
+                @click="activeTab = 'processed'">
+            <span class="tab-button__icon">✅</span>
+            <span class="tab-button__text">Notas Procesadas</span>
+            <span class="tab-badge" x-show="Object.keys(completedNotes).length > 0" x-text="Object.keys(completedNotes).length"></span>
+        </button>
+        </nav>
+        
+        <!-- Contenido de pestañas -->
+        <main class="tab-content">
+            <!-- Pestaña de Copiado -->
+            <section class="tab-panel" :class="{ 'tab-panel--active': activeTab === 'copy' }">
+                <header class="section-header">
+                    <h2 class="section-title">Notas para Copiar a Gemini</h2>
+                    <p class="section-description">Selecciona y copia las notas que deseas procesar</p>
+                </header>
+                
+                <div class="empty-state" x-show="Object.keys(notesToProcess).length === 0">
+                    <div class="empty-state__icon">📝</div>
+                    <h3 class="empty-state__title">No hay notas pendientes</h3>
+                    <p class="empty-state__description">Agrega archivos .md en la carpeta public_notes/ para comenzar</p>
+                </div>
+                
+                <div class="notes-list" x-show="Object.keys(notesToProcess).length > 0">
+                    <template x-for="(note, noteId) in Object.entries(notesToProcess)" :key="noteId">
+                        <article class="note-card" 
+                                 :class="{
+                                     'note-card--modified-external': note[1].status === 'modified_external',
+                                     'note-card--modified-internal': note[1].status === 'modified_internal',
+                                     'note-card--edited': note[1].status === 'edited'
+                                 }">
+                            <header class="note-card__header" @click="note[1].expanded = !note[1].expanded">
+                                <div class="note-card__title">
+                                    <h3 class="note-card__name" x-text="note[1].original_name"></h3>
+                                    <div class="status-container">
+                                        <span class="status-badge" 
+                                              :class="'status-badge--' + note[1].status" 
+                                              x-text="getStatusText(note[1].status)">
+                                        </span>
+                                        <span x-show="note[1].status === 'modified_external'" 
+                                              class="status-tooltip" 
+                                              title="Modificada en el archivo original">
+                                            (Origen)
+                                        </span>
+                                        <span x-show="note[1].status === 'modified_internal'" 
+                                              class="status-tooltip" 
+                                              title="Modificada por reprocesamiento">
+                                            (Reprocesada)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="note-card__actions">
+                                    <button @click.stop="copyToClipboard(note[0])"
+                                            :disabled="note[1].processing"
+                                            class="btn btn--primary btn--sm"
+                                            :class="{ 'btn--success': note[1].status === 'copied' }"
+                                            x-text="note[1].status === 'copied' ? '✓ Copiado' : 'Copiar'">
+                                    </button>
+                                    <button class="btn btn--ghost btn--icon" type="button">
+                                        <span class="expand-icon" 
+                                              :class="{ 'expand-icon--rotated': note[1].expanded }">▼</span>
+                                    </button>
+                                </div>
+                            </header>
+                            <div class="note-card__content" x-show="note[1].expanded" x-collapse>
+                                <div x-show="note[1].status === 'modified_external'" class="note-alert note-alert--external">
+                                    <strong>⚠️ Nota modificada en origen:</strong> El archivo original en public_notes ha cambiado.
+                                </div>
+                                <div x-show="note[1].status === 'modified_internal'" class="note-alert note-alert--internal">
+                                    <strong>🔄 Nota modificada por reprocesamiento:</strong> Esta nota fue alterada manualmente.
+                                </div>
+                                <pre class="note-content__text" x-text="note[1].content"></pre>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+            </section>
+            
+            <!-- Pestaña de Procesamiento -->
+            <section class="tab-panel" :class="{ 'tab-panel--active': activeTab === 'paste' }">
+                <header class="section-header">
+                    <h2 class="section-title">Procesar Respuestas de Gemini</h2>
+                    <p class="section-description">Pega las respuestas de Gemini para procesarlas</p>
+                </header>
+
+                <div class="empty-state" x-show="Object.keys(copiedNotes).length === 0">
+                    <div class="empty-state__icon">⚡</div>
+                    <h3 class="empty-state__title">No hay notas copiadas</h3>
+                    <p class="empty-state__description">Primero copia algunas notas desde la pestaña anterior</p>
+                </div>
+
+                <div class="responses-container" x-show="Object.keys(copiedNotes).length > 0">
+                    <template x-for="(note, noteId) in Object.entries(copiedNotes)" :key="noteId">
+                        <article class="response-card">
+                            <header class="response-card__header">
+                                <h3 class="response-card__title">
+                                    <span x-text="note[1].original_name"></span>
+                                    <span class="status-badge" 
+                                          :class="'status-badge--' + note[1].status" 
+                                          x-text="getStatusText(note[1].status)">
+                                    </span>
+                                </h3>
+                            </header>
+                            
+                            <div class="response-card__body">
+                                <div class="form-group">
+                                    <label class="form-label" :for="'response-' + note[0]">
+                                        Respuesta de Gemini
+                                    </label>
+                                    <textarea class="form-textarea" 
+                                            :id="'response-' + note[0]"
+                                            x-model="note[1].responseContent"
+                                            :placeholder="'Pega aquí la respuesta de Gemini para ' + note[1].original_name"
+                                            rows="6">
+                                    </textarea>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button class="btn btn--secondary" 
+                                            @click="previewResponse(note[0])"
+                                            :disabled="!note[1].responseContent.trim()"
+                                            type="button">
+                                        <span class="btn__icon">👁️</span>
+                                        <span class="btn__text">Vista Previa</span>
+                                    </button>
+                                    <button class="btn btn--primary" 
+                                            @click="pasteResponse(note[0])"
+                                            :disabled="note[1].processing || !note[1].responseContent.trim()"
+                                            type="button">
+                                        <span class="btn__icon">⚡</span>
+                                        <span class="btn__text">Procesar Respuesta</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="response-preview" 
+                                     x-show="note[1].showPreview"
+                                     x-html="note[1].preview">
+                                </div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+            </section>
+
+            <!-- Pestaña de Procesadas -->
+            <section class="tab-panel" :class="{ 'tab-panel--active': activeTab === 'processed' }">
+                <header class="section-header">
+                    <h2 class="section-title">Notas Procesadas</h2>
+                    <p class="section-description">Revisa y modifica notas si es necesario</p>
+                </header>
+                
+                <div class="empty-state" x-show="Object.keys(completedNotes).length === 0">
+                    <div class="empty-state__icon">✅</div>
+                    <h3 class="empty-state__title">No hay notas procesadas</h3>
+                    <p class="empty-state__description">Las notas procesadas aparecerán aquí</p>
+                </div>
+                
+                <div class="notes-list" x-show="Object.keys(completedNotes).length > 0">
+                    <template x-for="(note, noteId) in Object.entries(completedNotes)" :key="noteId">
+                        <article class="note-card">
+                            <header class="note-card__header" @click="note[1].expanded = !note[1].expanded">
+                                <div class="note-card__title">
+                                    <h3 class="note-card__name" x-text="note[1].original_name"></h3>
+                                    <span class="status-badge" 
+                                          :class="'status-badge--' + note[1].status" 
+                                          x-text="getStatusText(note[1].status)">
+                                    </span>
+                                </div>
+                                <div class="note-card__actions">
+                                    <button x-show="['completed', 'reprocessed', 'edited'].includes(note[1].status)"
+                                    @click.stop="prepareForReprocessing(note[0])"
+                                    :disabled="note[1].processing"
+                                    class="btn btn--warning btn--sm"
+                                    type="button">
+                                <span class="btn__icon">🔄</span>
+                                <span class="btn__text">Modificar</span>
+                            </button>
+                                    <button class="btn btn--ghost btn--icon" type="button">
+                                        <span class="expand-icon" 
+                                              :class="{ 'expand-icon--rotated': note[1].expanded }">▼</span>
+                                    </button>
+                                </div>
+                            </header>
+                            <div class="note-card__content" x-show="note[1].expanded" x-collapse>
+                                <div class="note-content">
+                                    <div class="note-meta">
+                                        <span class="note-meta__item">
+                                            <strong>Procesado:</strong> 
+                                            <span x-text="note[1].processed_at ? new Date(note[1].processed_at).toLocaleString() : 'N/A'"></span>
+                                        </span>
+                                        <span class="note-meta__item" x-show="note[1].content_length">
+                                            <strong>Tamaño:</strong> 
+                                            <span x-text="note[1].content_length + ' caracteres'"></span>
+                                        </span>
+                                    </div>
+                                    <pre class="note-content__text" x-text="note[1].content"></pre>
+                                </div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
