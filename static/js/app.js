@@ -60,6 +60,7 @@ function notesApp() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
         const data = await response.json()
+        // console.log("Datos crudos del backend:", data.notes)
 
         if (!data.notes) throw new Error("Formato de datos incorrecto")
 
@@ -74,6 +75,7 @@ function notesApp() {
             ...note,
             responseContent: previousNote?.responseContent || "",
             showPreview: previousNote?.showPreview || false,
+            preview: previousNote?.preview || "",
             processing: previousNote?.processing || false,
             expanded: previousNote?.expanded || false,
           }
@@ -227,8 +229,10 @@ function notesApp() {
     previewResponse(noteId) {
       const note = this.notes[noteId]
       note.showPreview = !note.showPreview
-      if (note.showPreview && marked) {
-        note.preview = marked.parse(note.responseContent)
+      if (note.showPreview && window.marked) {
+        note.preview = window.marked.parse(note.responseContent)
+      } else {
+        note.preview = note.responseContent
       }
     },
 
@@ -236,7 +240,7 @@ function notesApp() {
       const note = this.notes[noteId]
       try {
         note.processing = true
-        this.loading = true
+        // this.loading = true
 
         if (!note.responseContent.trim()) {
           throw new Error("El contenido no puede estar vacío")
@@ -346,10 +350,14 @@ function notesApp() {
   }
 }
 
+
 // Cleanup global cuando se cierra la página
 window.addEventListener("beforeunload", () => {
   // Detener cualquier intervalo activo
   if (window.notesAppInstance && window.notesAppInstance.autoRefreshInterval) {
     clearInterval(window.notesAppInstance.autoRefreshInterval)
+  }
+  if (window.notesAppInstance?.destroy) {
+    window.notesAppInstance.destroy()
   }
 })
