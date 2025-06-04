@@ -1,26 +1,38 @@
-# Gestor de Notas IA - Flask Version
+---
+title: "AI Notes Manager"
+description: "A note management application with real-time monitoring and a reactive interface built with Flask and Alpine.js."
+imageSrc: "https://i.postimg.cc/HLT5MH2H/artem-sapegin-b18-TRXc8-UPQ-unsplash.jpg"
+detailedDescription: "This project is a notes manager that detects file changes in real time, updates the interface automatically, and handles different states for each note. It uses Flask for a maintainable architecture and Alpine.js for a lightweight, modern UI."
+technologies:
+  - "Python"
+  - "Flask"
+  - "Alpine.js"
+  - "JavaScript"
+  - "HTML"
+links:
+  - href: "https://github.com/deveduar/ai-notes-converter.git"
+    label: "GitHub"
+features:
+  - "Real-time file monitoring without restarting the server."
+  - "Automatic UI updates every 3 seconds."
+  - "Improved state management: pending, copied, processed, and modified."
+  - "Flask-based architecture for better scalability and maintainability."
+  - "Modern, reactive user interface using Alpine.js."
+---
 
-## Características principales
+# AI Notes Manager
 
-- **Monitoreo en tiempo real**: Detecta automáticamente cambios en archivos sin reiniciar el servidor
-- **Interfaz reactiva**: Actualización automática de la UI cada 3 segundos
-- **Estados mejorados**: Mejor gestión de estados de notas (pendiente, copiado, procesado, modificado)
-- **Arquitectura Flask**: Más mantenible y escalable que el servidor HTTP básico
-- **Alpine.js**: Interfaz de usuario reactiva y moderna
+## Key Features
 
-## Instalación
+- **Real-time monitoring**: Automatically detects file changes without restarting the server
+- **Reactive interface**: UI updates every 3 seconds automatically
+- **Improved states**: Better handling of note states (pending, copied, processed, modified)
+- **Flask architecture**: More maintainable and scalable than a basic HTTP server
+- **Alpine.js**: Modern and reactive user interface
 
-1. Instalar dependencias:
+## Installation
+
+1. Install dependencies:
 ```bash
 pip install -r requirements.txt
-```
-
-2. Ejecutar la aplicación:
-```bash
-python app.py
-```
-
-3. Abrir en el navegador:
-```
-http://localhost:5500
 ```
