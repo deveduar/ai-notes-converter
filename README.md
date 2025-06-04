@@ -1,4 +1,4 @@
-# Gestor de Notas Gemini - Flask Version
+# Gestor de Notas IA - Flask Version
 
 ## Características principales
 
@@ -42,7 +42,7 @@ http://localhost:5500
 │   └── js/
 │       └── app.js       # Lógica Alpine.js
 ├── public_notes/        # Notas originales (.md)
-├── to_process/          # Notas preparadas para Gemini
+├── to_process/          # Notas preparadas para IA
 ├── processed_notes/     # Notas procesadas finales
 └── notes_status.json    # Estado de las notas
 \`\`\`
@@ -84,8 +84,8 @@ http://localhost:5500
 ## Uso
 
 1. **Agregar notas**: Coloca archivos `.md` en `public_notes/`
-2. **Copiar para Gemini**: Usa la pestaña "Notas para Copiar"
-3. **Procesar respuestas**: Pega las respuestas de Gemini en "Procesar Respuestas"
+2. **Copiar para IA**: Usa la pestaña "Notas para Copiar"
+3. **Procesar respuestas**: Pega las respuestas de IA en "Procesar Respuestas"
 4. **Revisar procesadas**: Ve el resultado en "Notas Procesadas"
 
 ## Ventajas sobre la versión anterior

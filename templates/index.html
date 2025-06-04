@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Notas Gemini</title>
+    <title>Gestor de Notas IA</title>
     
     <!-- CSS Modular -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
@@ -20,7 +20,7 @@
     <div class="container" x-data="notesApp()" x-init="init()">
         <!-- Header principal -->
         <header class="app-header">
-            <h1 class="app-title">Gestor de Notas Gemini</h1>
+            <h1 class="app-title">Gestor de Notas IA</h1>
             <div class="stats-bar" id="stats">
                 <div class="stat-item">
                     <span class="stat-label">Total:</span>
@@ -88,7 +88,7 @@
             <!-- Pestaña de Copiado -->
             <section class="tab-panel" :class="{ 'tab-panel--active': activeTab === 'copy' }">
                 <header class="section-header">
-                    <h2 class="section-title">Notas para Copiar a Gemini</h2>
+                    <h2 class="section-title">Notas para Copiar a IA</h2>
                     <p class="section-description">Selecciona y copia las notas que deseas procesar</p>
                 </header>
                 
@@ -156,8 +156,8 @@
             <!-- Pestaña de Procesamiento -->
             <section class="tab-panel" :class="{ 'tab-panel--active': activeTab === 'paste' }">
                 <header class="section-header">
-                    <h2 class="section-title">Procesar Respuestas de Gemini</h2>
-                    <p class="section-description">Pega las respuestas de Gemini para procesarlas</p>
+                    <h2 class="section-title">Procesar Respuestas de IA</h2>
+                    <p class="section-description">Pega las respuestas de IA para procesarlas</p>
                 </header>
 
                 <div class="empty-state" x-show="Object.keys(copiedNotes).length === 0">
@@ -182,12 +182,12 @@
                             <div class="response-card__body">
                                 <div class="form-group">
                                     <label class="form-label" :for="'response-' + note[0]">
-                                        Respuesta de Gemini
+                                        Respuesta de IA
                                     </label>
                                     <textarea class="form-textarea" 
                                             :id="'response-' + note[0]"
                                             x-model="note[1].responseContent"
-                                            :placeholder="'Pega aquí la respuesta de Gemini para ' + note[1].original_name"
+                                            :placeholder="'Pega aquí la respuesta de IA para ' + note[1].original_name"
                                             rows="6">
                                     </textarea>
                                 </div>
