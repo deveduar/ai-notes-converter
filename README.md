@@ -11,7 +11,7 @@ technologies:
   - "HTML"
 links:
   - href: "https://github.com/deveduar/ai-notes-converter.git"
-    label: "GitHub"
+    label: "GitHub Repository"
 features:
   - "Real-time file monitoring without restarting the server."
   - "Automatic UI updates every 3 seconds."
